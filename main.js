@@ -1,18 +1,23 @@
 const { app, BrowserWindow, Menu, shell, ipcMain } = require('electron');
 const path = require('path');
 const Store = require('electron-store');
+const { autoUpdater } = require('electron-updater');
 
 // Initialize electron-store for persistent settings
 const store = new Store();
 
 let mainWindow;
 
+// Configure auto-updater
+autoUpdater.autoDownload = false;
+autoUpdater.autoInstallOnAppQuit = true;
+
 // Check if running in development mode
 const isDev = process.env.NODE_ENV === 'development' || !app.isPackaged;
 
 // Your deployed web app URL - change this to your production URL
-// Default to localhost in development, or use environment variable
-const PLOTTA_WEB_URL = process.env.PLOTTA_URL || (isDev ? 'http://localhost:8081' : 'https://plotta.netlify.app');
+// Default to production URL, or use environment variable
+const PLOTTA_WEB_URL = process.env.PLOTTA_URL || 'https://www.plotta.io';
 
 function createWindow() {
   // Get saved window bounds or use defaults
@@ -65,11 +70,6 @@ function createWindow() {
 
   // Create application menu
   createMenu();
-
-  // Open DevTools in development
-  if (isDev) {
-    mainWindow.webContents.openDevTools();
-  }
 }
 
 function saveBounds() {
@@ -146,8 +146,54 @@ function createMenu() {
   Menu.setApplicationMenu(menu);
 }
 
+// Auto-updater event handlers
+autoUpdater.on('checking-for-update', () => {
+  console.log('Checking for update...');
+  sendStatusToWindow('checking-for-update');
+});
+
+autoUpdater.on('update-available', (info) => {
+  console.log('Update available:', info);
+  sendStatusToWindow('update-available', info);
+});
+
+autoUpdater.on('update-not-available', (info) => {
+  console.log('Update not available:', info);
+  sendStatusToWindow('update-not-available');
+});
+
+autoUpdater.on('error', (err) => {
+  console.error('Update error:', err);
+  sendStatusToWindow('update-error', err);
+});
+
+autoUpdater.on('download-progress', (progressObj) => {
+  console.log(`Download progress: ${progressObj.percent}%`);
+  sendStatusToWindow('download-progress', progressObj);
+});
+
+autoUpdater.on('update-downloaded', (info) => {
+  console.log('Update downloaded:', info);
+  sendStatusToWindow('update-downloaded', info);
+});
+
+function sendStatusToWindow(event, data) {
+  if (mainWindow) {
+    mainWindow.webContents.send('update-status', { event, data });
+  }
+}
+
 // App lifecycle
-app.whenReady().then(createWindow);
+app.whenReady().then(() => {
+  createWindow();
+
+  // Check for updates after 3 seconds (don't check immediately)
+  if (!isDev) {
+    setTimeout(() => {
+      autoUpdater.checkForUpdates();
+    }, 3000);
+  }
+});
 
 app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') {
@@ -161,11 +207,29 @@ app.on('activate', () => {
   }
 });
 
-// IPC handlers for potential future features
+// IPC handlers
 ipcMain.handle('get-app-version', () => {
   return app.getVersion();
 });
 
 ipcMain.handle('get-platform', () => {
   return process.platform;
+});
+
+ipcMain.on('check-for-updates', () => {
+  if (!isDev) {
+    autoUpdater.checkForUpdates();
+  }
+});
+
+ipcMain.on('download-update', () => {
+  if (!isDev) {
+    autoUpdater.downloadUpdate();
+  }
+});
+
+ipcMain.on('install-update', () => {
+  if (!isDev) {
+    autoUpdater.quitAndInstall(false, true);
+  }
 });
