@@ -15,9 +15,9 @@ autoUpdater.autoInstallOnAppQuit = true;
 // Check if running in development mode
 const isDev = process.env.NODE_ENV === 'development' || !app.isPackaged;
 
-// Your deployed web app URL - change this to your production URL
-// Default to production URL, or use environment variable
-const PLOTTA_WEB_URL = process.env.PLOTTA_URL || 'https://www.plotta.io';
+// Your deployed web app URL - always use production URL
+// Set PLOTTA_URL env variable to override (e.g., for localhost testing)
+const PLOTTA_WEB_URL = process.env.PLOTTA_URL || 'https://app.plotta.io';
 
 function createWindow() {
   // Get saved window bounds or use defaults
@@ -46,6 +46,7 @@ function createWindow() {
   });
 
   // Load the web app
+  console.log('🚀 Loading Plotta from:', PLOTTA_WEB_URL);
   mainWindow.loadURL(PLOTTA_WEB_URL);
 
   // Show window when ready
