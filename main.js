@@ -8,10 +8,11 @@ const store = new Store();
 let mainWindow;
 
 // Check if running in development mode
-const isDev = process.env.NODE_ENV === 'development';
+const isDev = process.env.NODE_ENV === 'development' || !app.isPackaged;
 
 // Your deployed web app URL - change this to your production URL
-const PLOTTA_WEB_URL = process.env.PLOTTA_URL || 'https://plotta.lovable.app';
+// Default to localhost in development, or use environment variable
+const PLOTTA_WEB_URL = process.env.PLOTTA_URL || (isDev ? 'http://localhost:8081' : 'https://plotta.netlify.app');
 
 function createWindow() {
   // Get saved window bounds or use defaults
