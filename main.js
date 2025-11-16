@@ -25,6 +25,8 @@ function createWindow() {
     ...windowBounds,
     minWidth: 800,
     minHeight: 600,
+    movable: true,
+    resizable: true,
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
       nodeIntegration: false,
@@ -32,9 +34,10 @@ function createWindow() {
       enableRemoteModule: false,
       webSecurity: true,
     },
-    titleBarStyle: 'hiddenInset', // Modern look on macOS
+    titleBarStyle: process.platform === 'darwin' ? 'default' : undefined, // Standard title bar
     backgroundColor: '#1a1a1a',
     show: false, // Don't show until ready
+    frame: true, // Show window frame
   });
 
   // Load the web app
