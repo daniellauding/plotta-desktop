@@ -7,6 +7,21 @@ contextBridge.exposeInMainWorld('electron', {
   getAppVersion: () => ipcRenderer.invoke('get-app-version'),
   getPlatform: () => ipcRenderer.invoke('get-platform'),
 
+  // Update-related APIs
+  checkForUpdates: () => ipcRenderer.send('check-for-updates'),
+  downloadUpdate: () => ipcRenderer.send('download-update'),
+  installUpdate: () => ipcRenderer.send('install-update'),
+
+  // Listen for update events
+  onUpdateStatus: (callback) => {
+    ipcRenderer.on('update-status', (event, data) => callback(data));
+  },
+
+  // Remove listeners
+  removeUpdateListener: () => {
+    ipcRenderer.removeAllListeners('update-status');
+  },
+
   // Add more APIs here as needed
   isDesktop: true,
 });
